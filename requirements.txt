@@ -1,2 +1,2 @@
 claude-api
-hugchat
+hugchat~=0.1.0
