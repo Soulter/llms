@@ -223,13 +223,18 @@ class LLMSPlugin:
             elif self.curr_llm == "bard":
                 if self.bard_client is None:
                     return True, tuple([True, "LLMS插件出现异常。（Claude未启用成功）", "llm"])
-                try:
-                    resp = self.bard_client.ask(message)
-                except BaseException as e:
-                    if "SNlM0e value not found in response. Check __Secure_1PSID value." in str(e):
-                        return True, tuple([True, "LLMS插件: Bard会话已过期, 请重新设置1PSID、1PSIDTS字段。", "llm"])
-                    else:
-                        return True, tuple([True, f"LLMS插件(Bard)报错: {str(e)}", "llm"])
+                
+                while True:
+                    try:
+                        resp = self.bard_client.ask(message)
+                        break
+                    except BaseException as e:
+                        if "SNlM0e value not found in response. Check __Secure_1PSID value." in str(e):
+                            return True, tuple([True, "LLMS插件: Bard会话已过期, 请重新设置1PSID、1PSIDTS字段。", "llm"])
+                        elif "This event loop is already running" in str(e):
+                            time.sleep(2)
+                        else:
+                            return True, tuple([True, f"LLMS插件(Bard)报错: {str(e)}", "llm"])
                 return True, tuple([True, resp['content'], "llm"])
 
         return False, None
