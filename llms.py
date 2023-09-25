@@ -67,7 +67,7 @@ class LLMSPlugin:
             elif l[1] == "1":
                 if is_installed == False:
                     return True, tuple([True, "LLMS插件依赖库未全部安装完成。请先安装或更新claude_api/hugchat/GoogleBard", "llm"])
-                ok, p1, p2 = self.check_auth(message_obj, platform, "Claude")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "Claude", role)
                 if not ok:
                     return p1, p2
 
@@ -86,7 +86,7 @@ class LLMSPlugin:
             elif l[1] == "2":
                 if is_installed == False:
                     return True, tuple([True, "LLMS插件依赖库未全部安装完成。请先安装或更新claude_api/hugchat/GoogleBard", "llm"])
-                ok, p1, p2 = self.check_auth(message_obj, platform, "HuggingChat")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "HuggingChat", role)
                 if not ok:
                     return p1, p2
                 
@@ -110,7 +110,7 @@ class LLMSPlugin:
             elif l[1] == "3":
                 if is_installed == False:
                     return True, tuple([True, "LLMS插件依赖库未全部安装完成。请先安装或更新claude_api/hugchat/GoogleBard", "llm"])
-                ok, p1, p2 = self.check_auth(message_obj, platform, "Google Bard")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "Google Bard", role)
                 if not ok:
                     return p1, p2
                 try:
@@ -134,7 +134,7 @@ class LLMSPlugin:
                     return True, tuple([True, f"Bard插件未被启用: 未知错误。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
 
             elif l[1] == "claude" and len(l) >= 3:
-                ok, p1, p2 = self.check_auth(message_obj, platform, "Claude")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "Claude", role)
                 if not ok:
                     return p1, p2
                 
@@ -142,7 +142,7 @@ class LLMSPlugin:
                 self.cc.put("llms_claude_cookie", cookies_str)
                 return True, tuple([True, "成功设置Claude的Cookie, 您现在可以启用Claude了。", "llm"])
             elif l[1] == "hc" and len(l) == 4:
-                ok, p1, p2 = self.check_auth(message_obj, platform, "HuggingChat")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "HuggingChat", role)
                 if not ok:
                     return p1, p2
                 email = l[2]
@@ -151,7 +151,7 @@ class LLMSPlugin:
                 self.cc.put("llms_huggingchat_psw", psw)
                 return True, tuple([True, "成功设置HuggingChat的账号, 您现在可以启用HuggingChat了。", "llm"])
             elif l[1] == "bard" and len(l) == 4:
-                ok, p1, p2 = self.check_auth(message_obj, platform, "Google Bard")
+                ok, p1, p2 = self.check_auth(message_obj, platform, "Google Bard", role)
                 if not ok:
                     return p1, p2
                 Secure_1PSID = l[2]
@@ -246,13 +246,9 @@ class LLMSPlugin:
         return BardClient(Secure_1PSID, Secure_1PAPISID)
 
     # 检查权限
-    def check_auth(self, message_obj, platform, model_name):
-        if platform == "gocq":
-            admin_qq = self.cc.get("admin_qq", "")
-            if admin_qq == "":
-                return False, True, tuple([True, "未设置管理员QQ, 请联系管理员在cmd_config.json文件下的admin_qq处设置管理员QQ (不需要重启，注意保存)。", "llm"])
-            if(str(message_obj.sender.user_id) != self.cc.get("admin_qq", 0)):
-                return False, True, tuple([True, f"您没有权限设置{model_name}模型。请联系管理员QQ: {admin_qq}", "llm"])
+    def check_auth(self, message_obj, platform, model_name, role):
+        if role != "admin":
+            return False, True, tuple([True, f"您的权限级别{role}没有权限设置{model_name}模型。请联系机器人部署者。", "llm"])
         return True, None, None
 
     """
