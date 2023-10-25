@@ -3,8 +3,8 @@
 QQChannelChatGPT大语言模型插件。
 
 支持：
-1. Claude （https://github.com/KoushikNavuluri/Claude-API）
-2. HuggingChat （https://github.com/Soulter/hugging-chat-api）
+1. [Claude](https://github.com/KoushikNavuluri/Claude-API)
+2. [HuggingChat](https://github.com/Soulter/hugging-chat-api)
 
 # 使用方法
 
