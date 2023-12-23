@@ -1,3 +1,2 @@
 claude-api
-hugchat~=0.2.2
-GoogleBard
+hugchat
