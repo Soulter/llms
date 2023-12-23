@@ -14,6 +14,6 @@ QQChannelChatGPT大语言模型插件。
 
 
 # 注意事项
-Claude 模型的Cookie的获取方式请见https://github.com/KoushikNavuluri/Claude-API。
+Claude 模型的 Cookie 的获取方式请见 https://github.com/KoushikNavuluri/Claude-API 
 
-HuggingChat需要先免费注册一个HuggingFace账号：huggingface.co
+HuggingChat 需要先免费注册一个 HuggingFace 账号：huggingface.co
