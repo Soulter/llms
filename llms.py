@@ -128,7 +128,7 @@ class LLMSPlugin:
             return False, None
             
     def help_menu(self):
-        return f"===大语言模型插件 V1.0===\n目前支持: \n0. 不启用\n1. Claude\n2. HuggingChat\n指令: \n /llm [序号]: 切换到对应的语言模型。\n /llm reset: 重置会话\n\n当前启用的是: {self.curr_llm}"
+        return f"=======LLMS V1.2=======\n目前支持: \n0. 不启用\n1. Claude\n2. HuggingChat\n指令: \n /llm [序号]: 切换到对应的语言模型。\n /llm reset: 重置会话\n\n当前启用的是: {self.curr_llm}"
 
     # 检查权限
     def check_auth(self, message_obj, platform, model_name, role):
@@ -149,8 +149,8 @@ class LLMSPlugin:
     def info(self):
         return {
             "name": "LLMSPlugin",
-            "desc": "QQChannelChatGPT的大语言模型库插件: 支持Claude、HuggingChat、Google Bard",
-            "help": "前往https://github.com/Soulter/llms查看帮助",
-            "version": "v1.0.2",
+            "desc": "AstrBot (原 QQChannelChatGPT)的大语言模型库插件: 支持 Claude、HuggingChat。前往 https://github.com/Soulter/llms 查看帮助。",
+            "help": "前往 https://github.com/Soulter/llms 查看帮助",
+            "version": "v1.2",
             "author": "Soulter"
         }
