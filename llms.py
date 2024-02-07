@@ -4,6 +4,7 @@ import traceback
 from .model._model import Model
 from .model.huggingchat import HuggingChatClient
 from .model.claude import ClaudeClient
+from .model.gemini import GeminiClient
 import os
 from cores.qqbot.global_object import AstrMessageEvent, CommandResult
 flag_not_support = False
@@ -28,6 +29,7 @@ class LLMSPlugin:
         put_config(self.NAMESPACE, "llms_claude_cookie", "llms_claude_cookie", "", "Claude 的 Cookie")
         put_config(self.NAMESPACE, "llms_huggingchat_email", "llms_huggingchat_email", "", "HuggingChat 的邮箱")
         put_config(self.NAMESPACE, "llms_huggingchat_psw", "llms_huggingchat_psw", "", "HuggingChat 的密码")
+        put_config(self.NAMESPACE, "llms_gemini_api_key", "llms_gemini_api_key", "", "Gemini 的 API Key")
         self.cfg = load_config(self.NAMESPACE)
         self.curr_llm = None
         self.curr_client: Model = None
@@ -109,7 +111,20 @@ class LLMSPlugin:
                     return True, tuple([True, "成功启用 HuggingChat。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"HuggingChat 未被启用。可能因为 HuggingChat 账号不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
-                
+               
+            # Gemini -> Setting
+            elif l[1] == "3":
+                # api_key = self.cc.get("llms_gemini_api_key", "")
+                api_key = self.cfg["llms_gemini_api_key"]
+                if api_key == "":
+                    return True, tuple([True, "Gemini 未被启用：未填写 Gemini API Key，请使用\n\n/llm gemini [您的API Key]\n\n以激活。(或在可视化面板修改)", "llm"])
+                try:
+                    self.curr_client = GeminiClient(api_key)
+                    self.curr_llm = "gemini"
+                    return True, tuple([True, "成功启用 Gemini。", "llm"])
+                except BaseException as e:
+                    return True, tuple([True, f"Gemini 未被启用。可能因为 Gemini API Key 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
+                 
             elif l[1] == "claude" and len(l) >= 3:
                 cookies_str = "".join(l[2:])
                 # self.cc.put("llms_claude_cookie", cookies_str)
@@ -123,6 +138,11 @@ class LLMSPlugin:
                 update_config(self.NAMESPACE, "llms_huggingchat_email", email)
                 update_config(self.NAMESPACE, "llms_huggingchat_psw", psw)
                 return True, tuple([True, "成功设置 HuggingChat 账号。", "llm"])
+            elif l[1] == "gemini" and len(l) == 3:
+                api_key = l[2]
+                # self.cc.put("llms_gemini_api_key", api_key)
+                update_config(self.NAMESPACE, "llms_gemini_api_key", api_key)
+                return True, tuple([True, "成功设置 Gemini API Key。", "llm"])
 
             elif l[1] == "reset":
                 try:
@@ -137,7 +157,7 @@ class LLMSPlugin:
             return False, None
             
     def help_menu(self):
-        return f"=======LLMS V1.2=======\n目前支持: \n0. 不启用\n1. Claude\n2. HuggingChat\n指令: \n /llm [序号]: 切换到对应的语言模型。\n /llm reset: 重置会话\n\n当前启用的是: {self.curr_llm}"
+        return f"=======LLMS V1.2=======\n目前支持: \n0. 不启用\n1. Claude\n2. HuggingChat\n3. Gemini\n指令: \n /llm [序号]: 切换到对应的语言模型。\n /llm reset: 重置会话\n\n当前启用的是: {self.curr_llm}"
 
     # 检查权限
     def check_auth(self, message_obj, platform, model_name, role):
