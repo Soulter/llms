@@ -1,18 +1,17 @@
 from nakuru.entities.components import *
-from nakuru import (
-    GroupMessage,
-    FriendMessage
-)
-from botpy.message import Message, DirectMessage
 from util import cmd_config as cc
 import traceback
-import asyncio
-from ._claude_api import Client
 from .model._model import Model
 from .model.huggingchat import HuggingChatClient
 from .model.claude import ClaudeClient
 import os
 from cores.qqbot.global_object import AstrMessageEvent, CommandResult
+flag_not_support = False
+try:
+    from util.plugin_dev.api.v1.config import *
+except ImportError:
+    flag_not_support = True
+    print("llms: 导入接口失败。请升级到 astrbot 最新版本。")
 
 """
 AstrBot (原 QQChannelChatGPT) 的大语言模型库插件。
@@ -23,8 +22,13 @@ class LLMSPlugin:
     """
     def __init__(self) -> None:
         print("LLMSPlugin")
+        self.NAMESPACE = "astrbot_plugin_llms"
         self.cc = cc.CmdConfig()
-        self.cc.init_attributes(["llms_claude_cookie", "llms_huggingchat_email", "llms_huggingchat_psw", "llms_choice"], "")
+        # self.cc.init_attributes(["llms_claude_cookie", "llms_huggingchat_email", "llms_huggingchat_psw", "llms_choice"], "")
+        put_config(self.NAMESPACE, "llms_claude_cookie", "llms_claude_cookie", "", "Claude 的 Cookie")
+        put_config(self.NAMESPACE, "llms_huggingchat_email", "llms_huggingchat_email", "", "HuggingChat 的邮箱")
+        put_config(self.NAMESPACE, "llms_huggingchat_psw", "llms_huggingchat_psw", "", "HuggingChat 的密码")
+        self.cfg = load_config(self.NAMESPACE)
         self.curr_llm = None
         self.curr_client: Model = None
 
@@ -77,9 +81,10 @@ class LLMSPlugin:
             
             # Claude -> Setting
             elif l[1] == "1":
-                claude_cookie = self.cc.get("llms_claude_cookie", "")
+                # claude_cookie = self.cc.get("llms_claude_cookie", "")
+                claude_cookie = self.cfg["llms_claude_cookie"]
                 if claude_cookie == "":
-                    return True, tuple([True, "Claude 未被启用：未填写 Claude cookies。请使用\n\n/llm claude [您在Claude上的的Cookie]\n\n以激活。(或从 cmd_config 文件修改)", "llm"])
+                    return True, tuple([True, "Claude 未被启用：未填写 Claude cookies。请使用\n\n/llm claude [您在Claude上的的Cookie]\n\n以激活。(或在可视化面板修改)", "llm"])
                 try:
                     self.curr_client = ClaudeClient(claude_cookie)
                     self.curr_llm = "claude"
@@ -89,10 +94,12 @@ class LLMSPlugin:
             
             # HuggingChat -> Setting
             elif l[1] == "2":
-                email = self.cc.get("llms_huggingchat_email", "")
-                psw = self.cc.get("llms_huggingchat_psw", "")
+                # email = self.cc.get("llms_huggingchat_email", "")
+                # psw = self.cc.get("llms_huggingchat_psw", "")
+                email = self.cfg["llms_huggingchat_email"]
+                psw = self.cfg["llms_huggingchat_psw"]
                 if email == "" or psw == "":
-                    return True, tuple([True, "HuggingChat 未被启用：未填写 HuggingChat 账号，请使用\n\n/llm hc [您的邮箱] [您的密码]\n\n以激活。(或从 cmd_config 文件修改)", "llm"])
+                    return True, tuple([True, "HuggingChat 未被启用：未填写 HuggingChat 账号，请使用\n\n/llm hc [您的邮箱] [您的密码]\n\n以激活。(或在可视化面板修改)", "llm"])
                 try:
                     root_path = os.path.dirname(__file__)
                     data_path = os.path.join(root_path, "data")
@@ -105,13 +112,16 @@ class LLMSPlugin:
                 
             elif l[1] == "claude" and len(l) >= 3:
                 cookies_str = "".join(l[2:])
-                self.cc.put("llms_claude_cookie", cookies_str)
+                # self.cc.put("llms_claude_cookie", cookies_str)
+                update_config(self.NAMESPACE, "llms_claude_cookie", cookies_str)
                 return True, tuple([True, "成功设置 Claude Cookie。", "llm"])
             elif l[1] == "hc" and len(l) == 4:
                 email = l[2]
                 psw = l[3]
-                self.cc.put("llms_huggingchat_email", email)
-                self.cc.put("llms_huggingchat_psw", psw)
+                # self.cc.put("llms_huggingchat_email", email)
+                # self.cc.put("llms_huggingchat_psw", psw)
+                update_config(self.NAMESPACE, "llms_huggingchat_email", email)
+                update_config(self.NAMESPACE, "llms_huggingchat_psw", psw)
                 return True, tuple([True, "成功设置 HuggingChat 账号。", "llm"])
 
             elif l[1] == "reset":
@@ -147,8 +157,9 @@ class LLMSPlugin:
     """        
     def info(self):
         return {
-            "name": "LLMSPlugin",
-            "desc": "AstrBot (原 QQChannelChatGPT)的大语言模型库插件: 支持 Claude、HuggingChat。前往 https://github.com/Soulter/llms 查看帮助。",
+            "plugin_type": "llm",
+            "name": "astrbot_plugin_llms",
+            "desc": "支持 Claude、HuggingChat、Gemini。主页: https://github.com/Soulter/llms",
             "help": "前往 https://github.com/Soulter/llms 查看帮助",
             "version": "v1.2",
             "author": "Soulter"
