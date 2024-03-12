@@ -94,8 +94,8 @@ class LLMSPlugin:
                 try:
                     self.curr_client = ClaudeClient(claude_cookie)
                     self.curr_llm = "claude"
-                    self.unregister()
-                    register_llm(self.curr_llm, self.curr_client)
+                    self.unregister(ame.context)
+                    register_llm(self.curr_llm, self.curr_client, ame.context)
                     return True, tuple([True, "成功启用 Claude。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"Claude 未被启用。可能因为您的 Claude 的 Cookie 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -114,8 +114,8 @@ class LLMSPlugin:
                     file_path = os.path.join(data_path, "llms_huggingchat_cookies.json")
                     self.curr_client = HuggingChatClient(email, psw, file_path)
                     self.curr_llm = "huggingchat"
-                    self.unregister()
-                    register_llm(self.curr_llm, self.curr_client)
+                    self.unregister(ame.context)
+                    register_llm(self.curr_llm, self.curr_client, ame.context)
                     return True, tuple([True, "成功启用 HuggingChat。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"HuggingChat 未被启用。可能因为 HuggingChat 账号不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -129,8 +129,8 @@ class LLMSPlugin:
                 try:
                     self.curr_client = GeminiClient(api_key)
                     self.curr_llm = "gemini"
-                    self.unregister()
-                    register_llm(self.curr_llm, self.curr_client)
+                    self.unregister(ame.context)
+                    register_llm(self.curr_llm, self.curr_client, ame.context)
                     return True, tuple([True, "成功启用 Gemini。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"Gemini 未被启用。可能因为 Gemini API Key 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -175,9 +175,9 @@ class LLMSPlugin:
             return False, True, tuple([True, f"您的权限级别{role}没有权限设置{model_name}模型。请联系机器人部署者。", "llm"])
         return True, None, None
     
-    def unregister(self):
+    def unregister(self, context):
         for i in self.models:
-            unregister_llm(i)
+            unregister_llm(i, context)
 
     """
     帮助函数,当用户输入 plugin v 插件名称 时,会调用此函数,返回帮助信息
