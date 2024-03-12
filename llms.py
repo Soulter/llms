@@ -53,7 +53,7 @@ class LLMSPlugin:
                 return CommandResult(
                     hit=True,
                     success=True,
-                    message_chain=[Plain(resp)],
+                    message_chain=[Plain(str(resp))],
                     command_name="llm"
                 )
             except BaseException as e:
