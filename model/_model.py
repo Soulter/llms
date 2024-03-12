@@ -1,5 +1,5 @@
-import abc
 import traceback
+from util.plugin_dev.api.v1.llm import LLMProvider
 
 def retry(n):
     def decorator(func):
@@ -16,12 +16,4 @@ def retry(n):
         return wrapper
     return decorator
 
-class Model():
-    @abc.abstractmethod
-    def text_chat(self, prompt: str) -> str:
-        pass
-    
-    @abc.abstractmethod
-    def reset_chat(self):
-        pass
-        
+Model = LLMProvider

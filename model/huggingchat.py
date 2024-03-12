@@ -6,17 +6,19 @@ class HuggingChatClient(Model):
     def __init__(self, email: str, pwd: str, path: str) -> None:
         super().__init__()
         sign = Login(email, pwd)
+        print("HuggingChatClient init")
         cookies = sign.login()
         sign.saveCookiesToDir(path)
         self.hc_client = hugchat.ChatBot(cookies=cookies.get_dict())
         self.hc_cid = self.hc_client.new_conversation()
         self.hc_client.change_conversation(self.hc_cid)
+        print("HuggingChatClient init done")
 
     @retry(3)
     def text_chat(self, prompt: str) -> str:
         return self.hc_client.chat(prompt)
     
     @retry(3)
-    def reset_chat(self):
+    def forget(self):
         conv = self.hc_client.new_conversation()
         self.hc_client.change_conversation(conv)

@@ -12,9 +12,7 @@ class GeminiClient(Model):
     @retry(3)
     def text_chat(self, prompt: str) -> str:
         return self.chat.send_message(prompt).text
-
     
     @retry(3)
-    def reset_chat(self):
-        conv = self.hc_client.new_conversation()
-        self.hc_client.change_conversation(conv)
+    def forget(self):
+        self.chat.history = []

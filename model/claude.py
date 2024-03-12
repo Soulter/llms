@@ -12,5 +12,5 @@ class ClaudeClient(Model):
         return self.claude_client.send_message(prompt, self.claude_cid)
     
     @retry(3)
-    def reset_chat(self):
+    def forget(self):
         self.claude_cid = self.claude_client.create_new_chat()['uuid']

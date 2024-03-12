@@ -1,18 +1,23 @@
 from nakuru.entities.components import *
-from util import cmd_config as cc
 import traceback
 from .model._model import Model
 from .model.huggingchat import HuggingChatClient
 from .model.claude import ClaudeClient
 from .model.gemini import GeminiClient
 import os
-from cores.qqbot.global_object import AstrMessageEvent, CommandResult
 flag_not_support = False
 try:
     from util.plugin_dev.api.v1.config import *
+    from util.plugin_dev.api.v1.bot import (
+        PluginMetadata,
+        PluginType,
+        AstrMessageEvent,
+        CommandResult,
+    )
+    from util.plugin_dev.api.v1.register import register_llm, unregister_llm
 except ImportError:
     flag_not_support = True
-    print("llms: 导入接口失败。请升级到 astrbot 最新版本。")
+    print("llms: 导入接口失败。请升级到 AstrBot 最新版本。")
 
 """
 AstrBot (原 QQChannelChatGPT) 的大语言模型库插件。
@@ -24,8 +29,6 @@ class LLMSPlugin:
     def __init__(self) -> None:
         print("LLMSPlugin")
         self.NAMESPACE = "astrbot_plugin_llms"
-        self.cc = cc.CmdConfig()
-        # self.cc.init_attributes(["llms_claude_cookie", "llms_huggingchat_email", "llms_huggingchat_psw", "llms_choice"], "")
         put_config(self.NAMESPACE, "llms_claude_cookie", "llms_claude_cookie", "", "Claude 的 Cookie")
         put_config(self.NAMESPACE, "llms_huggingchat_email", "llms_huggingchat_email", "", "HuggingChat 的邮箱")
         put_config(self.NAMESPACE, "llms_huggingchat_psw", "llms_huggingchat_psw", "", "HuggingChat 的密码")
@@ -33,6 +36,7 @@ class LLMSPlugin:
         self.cfg = load_config(self.NAMESPACE)
         self.curr_llm = None
         self.curr_client: Model = None
+        self.models = ["claude", "huggingchat", "gemini"]
 
     def run(self, ame: AstrMessageEvent):
         message = ame.message_str
@@ -90,6 +94,8 @@ class LLMSPlugin:
                 try:
                     self.curr_client = ClaudeClient(claude_cookie)
                     self.curr_llm = "claude"
+                    self.unregister()
+                    register_llm(self.curr_llm, self.curr_client)
                     return True, tuple([True, "成功启用 Claude。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"Claude 未被启用。可能因为您的 Claude 的 Cookie 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -108,6 +114,8 @@ class LLMSPlugin:
                     file_path = os.path.join(data_path, "llms_huggingchat_cookies.json")
                     self.curr_client = HuggingChatClient(email, psw, file_path)
                     self.curr_llm = "huggingchat"
+                    self.unregister()
+                    register_llm(self.curr_llm, self.curr_client)
                     return True, tuple([True, "成功启用 HuggingChat。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"HuggingChat 未被启用。可能因为 HuggingChat 账号不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -121,6 +129,8 @@ class LLMSPlugin:
                 try:
                     self.curr_client = GeminiClient(api_key)
                     self.curr_llm = "gemini"
+                    self.unregister()
+                    register_llm(self.curr_llm, self.curr_client)
                     return True, tuple([True, "成功启用 Gemini。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"Gemini 未被启用。可能因为 Gemini API Key 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
@@ -164,23 +174,20 @@ class LLMSPlugin:
         if role != "admin":
             return False, True, tuple([True, f"您的权限级别{role}没有权限设置{model_name}模型。请联系机器人部署者。", "llm"])
         return True, None, None
+    
+    def unregister(self):
+        for i in self.models:
+            unregister_llm(i)
 
     """
     帮助函数,当用户输入 plugin v 插件名称 时,会调用此函数,返回帮助信息
-    返回参数要求(必填): dict{
-        "name": str, # 插件名称
-        "desc": str, # 插件简短描述
-        "help": str, # 插件帮助信息
-        "version": str, # 插件版本
-        "author": str, # 插件作者
-    }
+    返回参数要求(必填): PluginMetadata
     """        
     def info(self):
-        return {
-            "plugin_type": "llm",
-            "name": "astrbot_plugin_llms",
-            "desc": "支持 Claude、HuggingChat、Gemini。主页: https://github.com/Soulter/llms",
-            "help": "前往 https://github.com/Soulter/llms 查看帮助",
-            "version": "v1.2",
-            "author": "Soulter"
-        }
+        return PluginMetadata(
+            plugin_name="astrbot_plugin_llms",
+            plugin_type=PluginType.LLM,
+            author="Soulter",
+            desc="支持 Claude、HuggingChat、Gemini。主页: https://github.com/Soulter/llms",
+            version="v1.3",
+        )
