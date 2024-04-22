@@ -6,7 +6,7 @@ from .model.huggingchat import HuggingChatClient
 from .model.claude import ClaudeClient
 from .model.gemini import GeminiClient
 from .model.newbing import NewbingClient
-import os
+import os, json
 flag_not_support = False
 try:
     from util.plugin_dev.api.v1.config import *
@@ -36,17 +36,17 @@ class LLMSPlugin:
         put_config(self.NAMESPACE, "llms_huggingchat_email", "llms_huggingchat_email", "", "HuggingChat 的邮箱")
         put_config(self.NAMESPACE, "llms_huggingchat_psw", "llms_huggingchat_psw", "", "HuggingChat 的密码")
         put_config(self.NAMESPACE, "llms_gemini_api_key", "llms_gemini_api_key", "", "Gemini 的 API Key")
-        put_config(self.NAMESPACE, "llms_newbing_cookies", "llms_newbing_cookies", "", "NewBing 的 Cookies")
+        put_config(self.NAMESPACE, "llms_newbing_cookies", "llms_newbing_cookies", "", "NewBing 的 Cookies 不要在这里填写，请添加到 data/newbing_cookies.json 文件下。")
         self.cfg = load_config(self.NAMESPACE)
         self.curr_llm = None
         self.curr_client: Model = None
         cc = CmdConfig()
         self.loop = asyncio.new_event_loop()
-        self.proxy = cc.get("http_proxy", "")
+        self.proxy = str(cc.get("http_proxy", ""))
         print("[llms] Proxy: ", self.proxy)
         self.models = ["claude", "huggingchat", "gemini", "newbing"]
 
-    def run(self, ame: AstrMessageEvent):
+    async def run(self, ame: AstrMessageEvent):
         message = ame.message_str
         if self.curr_llm is not None:
             if self.curr_client is None:
@@ -57,8 +57,7 @@ class LLMSPlugin:
                     command_name="llm"
                 )
             try:
-
-                resp = asyncio.run_coroutine_threadsafe(self.curr_client.text_chat(message), self.loop).result()
+                resp = await self.curr_client.text_chat(message)
                 return CommandResult(
                     hit=True,
                     success=True,
@@ -142,12 +141,13 @@ class LLMSPlugin:
                 
             # NewBing -> Setting
             elif l[1] == "4":
-                cookies = self.cfg["llms_newbing_cookies"]
-                if cookies == "":
-                    return True, tuple([True, "NewBing 未被启用：未填写 NewBing Cookies，请在面板填写 bing cookies", "llm"])
+                # cookies = self.cfg["llms_newbing_cookies"]
+                if not os.path.exists("data/newbing_cookies.json"):
+                    return True, tuple([True, "NewBing 未被启用：未填写 NewBing Cookies，请添加到 data/newbing_cookies.json 文件下", "llm"])
                 try:
-
+                    cookies = json.loads(open("data/newbing_cookies.json", "r").read())
                     self.curr_client = NewbingClient(cookies=cookies, proxy=self.proxy)
+                    await self.curr_client.create_conversation()
                     self.curr_llm = "newbing"
                     self.unregister(ame.context)
                     register_llm(self.curr_llm, self.curr_client, ame.context)

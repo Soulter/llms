@@ -6,17 +6,18 @@ class NewbingClient(Model):
     def __init__(self, cookies, proxy) -> None:
         super().__init__()
         self.cookies = cookies
+        self.proxy = proxy
 
     @retry(3)
     async def create_conversation(self):
-        self.c = await create_conversation(self.cookies)
+        self.c = await create_conversation(proxy=self.proxy, cookies=self.cookies)
         return self.c
 
     @retry(3)
     async def text_chat(self, prompt: str) -> str:
         ret = "error"
-
-        async for resp in ask_stream(self.c, prompt):
+        print("123")
+        async for resp in ask_stream(self.c, prompt, ""):
             obj = json.loads(resp)
             if obj['type'] == 2:
                 try:
