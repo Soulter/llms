@@ -32,3 +32,5 @@ Claude 模型的 Cookie 的获取方式请见： https://github.com/KoushikNavul
 HuggingChat 需要先免费注册一个 HuggingFace 账号：https://huggingface.co
 
 Gemini API Key 申请链接（目前免费）： https://makersuite.google.com/app/apikey
+
+使用 Newbing 需要复制 cookies 到 `data/newbing_cookies.json`
