@@ -1,9 +1,11 @@
 from nakuru.entities.components import *
 import traceback
+import asyncio
 from .model._model import Model
 from .model.huggingchat import HuggingChatClient
 from .model.claude import ClaudeClient
 from .model.gemini import GeminiClient
+from .model.newbing import NewbingClient
 import os
 flag_not_support = False
 try:
@@ -15,6 +17,7 @@ try:
         CommandResult,
     )
     from util.plugin_dev.api.v1.register import register_llm, unregister_llm
+    from util.cmd_config import CmdConfig
 except ImportError:
     flag_not_support = True
     print("llms: 导入接口失败。请升级到 AstrBot 最新版本。")
@@ -27,16 +30,20 @@ class LLMSPlugin:
     初始化函数, 可以选择直接pass
     """
     def __init__(self) -> None:
-        print("LLMSPlugin")
+        print("[llms] LLMSPlugin")
         self.NAMESPACE = "astrbot_plugin_llms"
         put_config(self.NAMESPACE, "llms_claude_cookie", "llms_claude_cookie", "", "Claude 的 Cookie")
         put_config(self.NAMESPACE, "llms_huggingchat_email", "llms_huggingchat_email", "", "HuggingChat 的邮箱")
         put_config(self.NAMESPACE, "llms_huggingchat_psw", "llms_huggingchat_psw", "", "HuggingChat 的密码")
         put_config(self.NAMESPACE, "llms_gemini_api_key", "llms_gemini_api_key", "", "Gemini 的 API Key")
+        put_config(self.NAMESPACE, "llms_newbing_cookies", "llms_newbing_cookies", "", "NewBing 的 Cookies")
         self.cfg = load_config(self.NAMESPACE)
         self.curr_llm = None
         self.curr_client: Model = None
-        self.models = ["claude", "huggingchat", "gemini"]
+        cc = CmdConfig()
+        self.proxy = cc.get("http_proxy", "")
+        print("[llms] Proxy: ", self.proxy)
+        self.models = ["claude", "huggingchat", "gemini", "newbing"]
 
     def run(self, ame: AstrMessageEvent):
         message = ame.message_str
@@ -49,7 +56,7 @@ class LLMSPlugin:
                     command_name="llm"
                 )
             try:
-                resp = self.curr_client.text_chat(message)
+                resp = asyncio.run_coroutine_threadsafe(self.curr_client.text_chat(message), asyncio.get_event_loop()).result()
                 return CommandResult(
                     hit=True,
                     success=True,
@@ -87,7 +94,6 @@ class LLMSPlugin:
             
             # Claude -> Setting
             elif l[1] == "1":
-                # claude_cookie = self.cc.get("llms_claude_cookie", "")
                 claude_cookie = self.cfg["llms_claude_cookie"]
                 if claude_cookie == "":
                     return True, tuple([True, "Claude 未被启用：未填写 Claude cookies。请使用\n\n/llm claude [您在Claude上的的Cookie]\n\n以激活。(或在可视化面板修改)", "llm"])
@@ -102,8 +108,6 @@ class LLMSPlugin:
             
             # HuggingChat -> Setting
             elif l[1] == "2":
-                # email = self.cc.get("llms_huggingchat_email", "")
-                # psw = self.cc.get("llms_huggingchat_psw", "")
                 email = self.cfg["llms_huggingchat_email"]
                 psw = self.cfg["llms_huggingchat_psw"]
                 if email == "" or psw == "":
@@ -122,7 +126,6 @@ class LLMSPlugin:
                
             # Gemini -> Setting
             elif l[1] == "3":
-                # api_key = self.cc.get("llms_gemini_api_key", "")
                 api_key = self.cfg["llms_gemini_api_key"]
                 if api_key == "":
                     return True, tuple([True, "Gemini 未被启用：未填写 Gemini API Key，请使用\n\n/llm gemini [您的API Key]\n\n以激活。(或在可视化面板修改)", "llm"])
@@ -134,25 +137,37 @@ class LLMSPlugin:
                     return True, tuple([True, "成功启用 Gemini。", "llm"])
                 except BaseException as e:
                     return True, tuple([True, f"Gemini 未被启用。可能因为 Gemini API Key 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
+                
+            # NewBing -> Setting
+            elif l[1] == "4":
+                cookies = self.cfg["llms_newbing_cookies"]
+                if cookies == "":
+                    return True, tuple([True, "NewBing 未被启用：未填写 NewBing Cookies，请在面板填写 bing cookies", "llm"])
+                try:
+
+                    self.curr_client = NewbingClient(cookies=cookies, proxy=self.proxy)
+                    self.curr_llm = "newbing"
+                    self.unregister(ame.context)
+                    register_llm(self.curr_llm, self.curr_client, ame.context)
+                    return True, tuple([True, "成功启用 NewBing。", "llm"])
+                except BaseException as e:
+                    return True, tuple([True, f"NewBing 未被启用。可能因为 NewBing Cookies 不正确。\n\n报错堆栈: {traceback.format_exc()}", "llm"])
                  
             elif l[1] == "claude" and len(l) >= 3:
                 cookies_str = "".join(l[2:])
-                # self.cc.put("llms_claude_cookie", cookies_str)
                 update_config(self.NAMESPACE, "llms_claude_cookie", cookies_str)
                 return True, tuple([True, "成功设置 Claude Cookie。", "llm"])
             elif l[1] == "hc" and len(l) == 4:
                 email = l[2]
                 psw = l[3]
-                # self.cc.put("llms_huggingchat_email", email)
-                # self.cc.put("llms_huggingchat_psw", psw)
                 update_config(self.NAMESPACE, "llms_huggingchat_email", email)
                 update_config(self.NAMESPACE, "llms_huggingchat_psw", psw)
                 return True, tuple([True, "成功设置 HuggingChat 账号。", "llm"])
             elif l[1] == "gemini" and len(l) == 3:
                 api_key = l[2]
-                # self.cc.put("llms_gemini_api_key", api_key)
                 update_config(self.NAMESPACE, "llms_gemini_api_key", api_key)
                 return True, tuple([True, "成功设置 Gemini API Key。", "llm"])
+            
 
             elif l[1] == "reset":
                 try:
@@ -167,7 +182,18 @@ class LLMSPlugin:
             return False, None
             
     def help_menu(self):
-        return f"=======LLMS V1.2=======\n目前支持: \n0. 不启用\n1. Claude\n2. HuggingChat\n3. Gemini\n指令: \n /llm [序号]: 切换到对应的语言模型。\n /llm reset: 重置会话\n\n当前启用的是: {self.curr_llm}"
+        return f"""=======LLMS V1.2=======
+目前支持: 
+0. 不启用
+1. Claude
+2. HuggingChat
+3. Gemini
+4. NewBing
+指令: 
+/llm [序号]: 切换到对应的语言模型。
+/llm reset: 重置会话
+
+当前启用的是: {self.curr_llm}"""
 
     # 检查权限
     def check_auth(self, message_obj, platform, model_name, role):
