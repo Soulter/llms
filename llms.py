@@ -41,6 +41,7 @@ class LLMSPlugin:
         self.curr_llm = None
         self.curr_client: Model = None
         cc = CmdConfig()
+        self.loop = asyncio.new_event_loop()
         self.proxy = cc.get("http_proxy", "")
         print("[llms] Proxy: ", self.proxy)
         self.models = ["claude", "huggingchat", "gemini", "newbing"]
@@ -56,7 +57,8 @@ class LLMSPlugin:
                     command_name="llm"
                 )
             try:
-                resp = asyncio.run_coroutine_threadsafe(self.curr_client.text_chat(message), asyncio.get_event_loop()).result()
+
+                resp = asyncio.run_coroutine_threadsafe(self.curr_client.text_chat(message), self.loop).result()
                 return CommandResult(
                     hit=True,
                     success=True,
