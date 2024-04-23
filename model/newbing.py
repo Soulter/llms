@@ -1,6 +1,5 @@
 from ._model import Model, retry
 from .._sydney import create_conversation, ask_stream
-import json
 
 class NewbingClient(Model):
     def __init__(self, cookies, proxy) -> None:
@@ -16,12 +15,11 @@ class NewbingClient(Model):
     @retry(3)
     async def text_chat(self, prompt: str) -> str:
         ret = "error"
-        print("123")
-        async for resp in ask_stream(self.c, prompt, ""):
-            obj = json.loads(resp)
-            if obj['type'] == 2:
+        async for resp in ask_stream(self.c, prompt, "", proxy=self.proxy, cookies=self.cookies):
+            # print(resp)
+            if resp['type'] == 2:
                 try:
-                    ret = obj['item']['result']['message']
+                    ret = resp['item']['result']['message']
                 except:
                     ret = "json error"
                 break
