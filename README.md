@@ -33,4 +33,4 @@ HuggingChat 需要先免费注册一个 HuggingFace 账号：https://huggingface
 
 Gemini API Key 申请链接（目前免费）： https://makersuite.google.com/app/apikey
 
-使用 Newbing 需要复制 cookies 到 `data/newbing_cookies.json`
+使用 Newbing 需要复制 cookies (450行+) 到 `data/newbing_cookies.json`
