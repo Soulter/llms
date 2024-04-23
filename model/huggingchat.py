@@ -12,11 +12,15 @@ class HuggingChatClient(Model):
         self.hc_client = hugchat.ChatBot(cookies=cookies.get_dict())
         self.hc_cid = self.hc_client.new_conversation()
         self.hc_client.change_conversation(self.hc_cid)
+        self.is_search = False
         print("HuggingChatClient init done")
 
     @retry(3)
-    def text_chat(self, prompt: str) -> str:
-        return self.hc_client.chat(prompt)
+    def text_chat(self, prompt: str, image_url: str = None) -> str:
+        return self.hc_client.chat(prompt, web_search=self.is_search)
+    
+    async def set_search(self, is_search: bool):
+        self.is_search = is_search
     
     @retry(3)
     def forget(self):

@@ -10,7 +10,7 @@ class GeminiClient(Model):
         self.chat = self.model.start_chat(history=[])
 
     @retry(3)
-    def text_chat(self, prompt: str) -> str:
+    def text_chat(self, prompt: str, image_url: str = None) -> str:
         return self.chat.send_message(prompt).text
     
     @retry(3)

@@ -48,6 +48,15 @@ class LLMSPlugin:
 
     async def run(self, ame: AstrMessageEvent):
         message = ame.message_str
+        image_url = None
+
+        for i in ame.message_obj.message:
+            if isinstance(i, Image):
+                print("[llms] Image detected: ", i)
+                image_url = i.url
+                break
+
+
         if self.curr_llm is not None:
             if self.curr_client is None:
                 return CommandResult(
@@ -57,7 +66,7 @@ class LLMSPlugin:
                     command_name="llm"
                 )
             try:
-                resp = await self.curr_client.text_chat(message)
+                resp = await self.curr_client.text_chat(message, image_url=image_url)
                 return CommandResult(
                     hit=True,
                     success=True,
@@ -178,6 +187,19 @@ class LLMSPlugin:
                 except BaseException as e:
                     return True, tuple([True, f"重置 {self.curr_llm} 会话失败：{str(e)}", "llm"])
             
+            elif l[1] == "ws" and len(l) == 3:
+                if self.curr_llm == "newbing" or self.curr_llm == "huggingchat":
+                    if l[2] == "0":
+                        await self.curr_client.set_search(False)
+                        return True, tuple([True, f"成功关闭 {self.curr_llm} 的搜索功能。", "llm"])
+                    elif l[2] == "1":
+                        await self.curr_client.set_search(True)
+                        return True, tuple([True, f"成功开启 {self.curr_llm} 的搜索功能。", "llm"])
+                    else:
+                        return True, tuple([True, "参数错误。", "llm"])
+                else:
+                    return True, tuple([True, f"当前语言模型 {self.curr_llm} 不支持此功能。", "llm"])
+            
             else:
                 return True, tuple([True, self.help_menu(), "llm"])
         else:
@@ -191,9 +213,12 @@ class LLMSPlugin:
 2. HuggingChat
 3. Gemini
 4. NewBing
-指令: 
+指令:
+[所有] 
 /llm [序号]: 切换到对应的语言模型。
 /llm reset: 重置会话
+/llm ws [0/1]: 设置是否调用网页搜索(限 newbing、huggingchat)。
+* Newbing 支持图片理解，图片理解且开启搜索的情况下，返回结果较慢。
 
 当前启用的是: {self.curr_llm}"""
 

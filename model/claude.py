@@ -8,7 +8,7 @@ class ClaudeClient(Model):
         self.claude_cid = self.claude_client.create_new_chat()['uuid']
 
     @retry(3)
-    def text_chat(self, prompt: str) -> str:
+    def text_chat(self, prompt: str, image_url: str = None) -> str:
         return self.claude_client.send_message(prompt, self.claude_cid)
     
     @retry(3)
