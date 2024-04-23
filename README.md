@@ -6,6 +6,7 @@ AstrBot（原 QQChannelChatGPT）接入更多大语言模型的插件。
 1. [Claude](https://github.com/KoushikNavuluri/Claude-API)
 2. [HuggingChat](https://github.com/Soulter/hugging-chat-api)
 3. [Google Gemini](https://makersuite.google.com/app/apikey)
+4. New Bing
 
 ## 计划支持
 
@@ -33,4 +34,4 @@ HuggingChat 需要先免费注册一个 HuggingFace 账号：https://huggingface
 
 Gemini API Key 申请链接（目前免费）： https://makersuite.google.com/app/apikey
 
-使用 Newbing 需要复制 cookies 到 `data/newbing_cookies.json`
+使用 Newbing 需要复制 cookies (450行+) 到 `data/newbing_cookies.json`
