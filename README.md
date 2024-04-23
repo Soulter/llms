@@ -6,6 +6,7 @@ AstrBot（原 QQChannelChatGPT）接入更多大语言模型的插件。
 1. [Claude](https://github.com/KoushikNavuluri/Claude-API)
 2. [HuggingChat](https://github.com/Soulter/hugging-chat-api)
 3. [Google Gemini](https://makersuite.google.com/app/apikey)
+4. New Bing
 
 ## 计划支持
 
