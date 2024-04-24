@@ -210,8 +210,8 @@ def _format(msg: dict) -> str:
 
 
 async def create_conversation(
-        proxy: str | None = _PROXY,
-        cookies: list[dict] | None = None,
+        proxy= _PROXY,
+        cookies = None,
 ):
     formatted_cookies = {}
     if cookies:
@@ -262,7 +262,7 @@ async def ask_stream(
         proxy=_PROXY,
         image_url=None,
         wss_url='wss://sydney.bing.com/sydney/ChatHub',
-        cookies: list[dict] | None = None,
+        cookies = None,
         no_search: bool = False,
 ):
     timeout = aiohttp.ClientTimeout(total=900)
