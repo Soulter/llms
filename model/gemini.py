@@ -10,9 +10,9 @@ class GeminiClient(Model):
         self.chat = self.model.start_chat(history=[])
 
     @retry(3)
-    def text_chat(self, prompt: str, image_url: str = None) -> str:
+    async def text_chat(self, prompt: str, session_id: str, image_url: str = None, **kwargs) -> str:
         return self.chat.send_message(prompt).text
-    
+
     @retry(3)
-    def forget(self):
+    async def forget(self, session_id=None) -> bool:
         self.chat.history = []

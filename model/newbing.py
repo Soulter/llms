@@ -14,7 +14,7 @@ class NewbingClient(Model):
         return self.c
 
     @retry(3)
-    async def text_chat(self, prompt: str, image_url: str = None) -> str:
+    async def text_chat(self, prompt: str, session_id: str, image_url: str = None, **kwargs) -> str:
         ret = "error"
         async for resp in ask_stream(self.c, prompt, "", proxy=self.proxy, cookies=self.cookies, image_url=image_url, no_search=not self.is_search):
             print(resp)

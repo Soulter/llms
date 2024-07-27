@@ -16,13 +16,13 @@ class HuggingChatClient(Model):
         print("HuggingChatClient init done")
 
     @retry(3)
-    def text_chat(self, prompt: str, image_url: str = None) -> str:
+    async def text_chat(self, prompt: str, session_id: str, image_url: str = None, **kwargs) -> str:
         return self.hc_client.chat(prompt, web_search=self.is_search)
     
     async def set_search(self, is_search: bool):
         self.is_search = is_search
     
     @retry(3)
-    def forget(self):
+    async def forget(self, session_id=None) -> bool:
         conv = self.hc_client.new_conversation()
         self.hc_client.change_conversation(conv)
