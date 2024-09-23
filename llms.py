@@ -31,7 +31,7 @@ class LLMSPlugin:
         self.cfg = load_config(self.NAMESPACE)
         self.context = context
         self.curr_client: Model = None
-        self.proxy = self.context.base_config.get("proxy", "")
+        self.proxy = self.context.config_helper.https_proxy
         self.models = ["claude", "huggingchat", "gemini", "newbing"]
         self.logger = logging.getLogger("astrbot")
         
